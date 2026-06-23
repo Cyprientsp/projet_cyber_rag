@@ -1,0 +1,58 @@
+[
+  {
+    "question": "Quelle est la garantie constructeur de l'onduleur HX-Solar 5000 ?",
+    "sources": "entreprise_helionix.md, politique_rh_helionix.md, produit_hx_solar_5000.md",
+    "top_score": 0.812,
+    "rag_answer": "12 ans",
+    "no_rag_answer": "La garantie constructeur de l'onduleur HX-Solar 5000 est de **10 ans** sur le matériel et **5 ans** sur les composants électroniques.",
+    "compare": true
+  },
+  {
+    "question": "Que signifie le code d'erreur E-204 sur le HX-Solar 5000 ?",
+    "sources": "entreprise_helionix.md, politique_rh_helionix.md, produit_hx_solar_5000.md",
+    "top_score": 0.787,
+    "rag_answer": "Le code d'erreur E-204 signale une surchauffe du transformateur : il faut vérifier la ventilation et contacter le SAV HelioniX si le défaut persiste.",
+    "no_rag_answer": "Le code d'erreur E-204 sur le HX-Solar 5000 indique un **défaut de communication avec la centrale solaire**.",
+    "compare": true
+  },
+  {
+    "question": "Combien de jours de télétravail par semaine sont autorisés chez HelioniX, et quel jour est obligatoirement travaillé au bureau ?",
+    "sources": "entreprise_helionix.md, politique_rh_helionix.md, produit_hx_solar_5000.md",
+    "top_score": 0.803,
+    "rag_answer": "HelioniX autorise jusqu'à 3 jours de télétravail par semaine pour les postes éligibles. Le mardi est un jour de présence obligatoire au bureau pour toutes les équipes (réunion hebdomadaire « SunSync »).",
+    "no_rag_answer": null,
+    "compare": false
+  },
+  {
+    "question": "Quel est le rendement européen du HX-Solar 5000 et sur quel port TCP fonctionne le protocole SunLink v3 ?",
+    "sources": "politique_rh_helionix.md, produit_hx_solar_5000.md",
+    "top_score": 0.786,
+    "rag_answer": "Le rendement européen du HX-Solar 5000 est de 97,8 %. Le protocole SunLink v3 fonctionne sur le port TCP 8770.",
+    "no_rag_answer": null,
+    "compare": false
+  },
+  {
+    "question": "Qui est la présidente de HelioniX et quel était le chiffre d'affaires 2024 ?",
+    "sources": "entreprise_helionix.md, politique_rh_helionix.md, produit_hx_solar_5000.md",
+    "top_score": 0.757,
+    "rag_answer": "Amélie Rouanet est la présidente de HelioniX. Le chiffre d'affaires 2024 était de 38,6 millions d'euros.",
+    "no_rag_answer": null,
+    "compare": false
+  },
+  {
+    "question": "Quelle est la valeur faciale du ticket restaurant et la prise en charge employeur chez HelioniX ?",
+    "sources": "entreprise_helionix.md, politique_rh_helionix.md, produit_hx_solar_5000.md",
+    "top_score": 0.778,
+    "rag_answer": "La valeur faciale du ticket restaurant est de 11 € et la prise en charge employeur est de 6,60 €.",
+    "no_rag_answer": null,
+    "compare": false
+  },
+  {
+    "question": "Quelle est la capitale de l'Australie ?",
+    "sources": "entreprise_helionix.md, politique_rh_helionix.md, produit_hx_solar_5000.md",
+    "top_score": 0.597,
+    "rag_answer": "Je ne dispose pas de cette information dans ma base de connaissance.",
+    "no_rag_answer": "Canberra 🇦🇺",
+    "compare": true
+  }
+]

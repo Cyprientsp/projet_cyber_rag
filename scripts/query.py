@@ -16,6 +16,10 @@ import sys
 import requests
 import psycopg2
 
+# Console Windows : force UTF-8 pour éviter les UnicodeEncodeError (cp1252).
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+
 from config import (DB_CONFIG, OLLAMA_URL, EMBED_MODEL, GEN_MODEL, TOP_K)
 
 SYSTEM_PROMPT = (

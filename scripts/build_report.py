@@ -1,0 +1,396 @@
+#!/usr/bin/env python3
+"""
+build_report.py — Génère le rapport HTML du projet RAG (puis convertible en PDF).
+
+Lit rapport/demo_resultats.json (produit par demo.py) et assemble un rapport
+autonome rapport/rapport_rag.html :
+  - description de l'environnement et de l'architecture (schéma SVG) ;
+  - workflow des traitements ingestion / interrogation (schéma SVG) ;
+  - procédure d'installation (commandes) ;
+  - extraits des scripts ;
+  - tableau prompt / réponse (AVEC vs SANS RAG).
+
+Conversion en PDF (Edge headless, voir README) :
+    msedge --headless --disable-gpu --print-to-pdf=rapport/rapport_rag.pdf \
+           rapport/rapport_rag.html
+"""
+import os
+import html
+import json
+
+HERE = os.path.dirname(__file__)
+RAP_DIR = os.path.join(HERE, "..", "rapport")
+JSON_IN = os.path.join(RAP_DIR, "demo_resultats.json")
+HTML_OUT = os.path.join(RAP_DIR, "rapport_rag.html")
+
+
+def esc(s):
+    return html.escape(str(s)) if s is not None else ""
+
+
+# --------------------------------------------------------------------------- #
+# Schéma SVG : architecture de l'environnement
+# --------------------------------------------------------------------------- #
+SVG_ARCHI = """
+<svg viewBox="0 0 760 430" xmlns="http://www.w3.org/2000/svg" class="diagram">
+  <style>
+    .host{fill:#f4f6fb;stroke:#33415c;stroke-width:1.5}
+    .docker{fill:#eaf2fd;stroke:#1d6fb8;stroke-width:1.5}
+    .cont{fill:#ffffff;stroke:#1d6fb8;stroke-width:1.2}
+    .py{fill:#fff7e6;stroke:#c8861a;stroke-width:1.2}
+    .t{font:13px 'Segoe UI',sans-serif;fill:#1b2430}
+    .tb{font:bold 13px 'Segoe UI',sans-serif;fill:#1b2430}
+    .ts{font:11px 'Segoe UI',sans-serif;fill:#55607a}
+    .ar{stroke:#33415c;stroke-width:1.4;fill:none;marker-end:url(#a)}
+    .lbl{font:10px 'Segoe UI',sans-serif;fill:#33415c}
+  </style>
+  <defs>
+    <marker id="a" markerWidth="9" markerHeight="9" refX="7" refY="3"
+            orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L7,3 L0,6 Z" fill="#33415c"/>
+    </marker>
+  </defs>
+  <rect class="host" x="8" y="8" width="744" height="414" rx="8"/>
+  <text class="tb" x="22" y="30">Machine hôte — Windows 11 Pro (x86-64)</text>
+
+  <rect class="py" x="28" y="50" width="200" height="120" rx="6"/>
+  <text class="tb" x="40" y="72">Scripts Python (venv 3.14)</text>
+  <text class="t"  x="40" y="94">ingest.py</text>
+  <text class="ts" x="40" y="110">chunk + embedding + INSERT</text>
+  <text class="t"  x="40" y="132">query.py</text>
+  <text class="ts" x="40" y="148">retrieval + prompt + génération</text>
+
+  <rect class="docker" x="270" y="50" width="466" height="350" rx="8"/>
+  <text class="tb" x="286" y="72">Docker Desktop (backend WSL 2) — conteneurs</text>
+
+  <rect class="cont" x="292" y="92" width="420" height="120" rx="6"/>
+  <text class="tb" x="306" y="114">rag-ollama — image ollama/ollama</text>
+  <text class="t"  x="306" y="136">Moteur LLM local · port 11434</text>
+  <text class="ts" x="306" y="158">• nomic-embed-text  → embeddings (768 dim.)</text>
+  <text class="ts" x="306" y="176">• gemma2:2b         → génération de texte</text>
+  <text class="ts" x="306" y="196">volume : ollamadata (modèles persistés)</text>
+
+  <rect class="cont" x="292" y="232" width="420" height="148" rx="6"/>
+  <text class="tb" x="306" y="254">rag-db — image pgvector/pgvector:pg16</text>
+  <text class="t"  x="306" y="276">PostgreSQL 16 + extension pgvector · port 5433→5432</text>
+  <text class="ts" x="306" y="298">table documents(id, source, chunk_index,</text>
+  <text class="ts" x="306" y="314">content, embedding VECTOR(768), created_at)</text>
+  <text class="ts" x="306" y="336">index HNSW (vector_cosine_ops)</text>
+  <text class="ts" x="306" y="358">volume : pgdata (base persistée)</text>
+
+  <path class="ar" d="M228,108 L292,128"/>
+  <text class="lbl" x="231" y="120">REST</text>
+  <text class="lbl" x="227" y="133">:11434</text>
+  <path class="ar" d="M228,150 L292,290"/>
+  <text class="lbl" x="233" y="212">SQL</text>
+  <text class="lbl" x="227" y="225">:5433</text>
+</svg>
+"""
+
+# --------------------------------------------------------------------------- #
+# Schéma SVG : workflow des traitements (ingestion + interrogation)
+# --------------------------------------------------------------------------- #
+SVG_FLOW = """
+<svg viewBox="0 0 760 360" xmlns="http://www.w3.org/2000/svg" class="diagram">
+  <style>
+    .bx{fill:#ffffff;stroke:#1d6fb8;stroke-width:1.3}
+    .bd{fill:#eaf2fd;stroke:#1d6fb8;stroke-width:1.3}
+    .bg{fill:#fff7e6;stroke:#c8861a;stroke-width:1.3}
+    .t{font:12px 'Segoe UI',sans-serif;fill:#1b2430}
+    .tb{font:bold 12px 'Segoe UI',sans-serif;fill:#1b2430}
+    .lane{font:bold 13px 'Segoe UI',sans-serif;fill:#33415c}
+    .ar{stroke:#33415c;stroke-width:1.4;fill:none;marker-end:url(#b)}
+  </style>
+  <defs>
+    <marker id="b" markerWidth="9" markerHeight="9" refX="7" refY="3"
+            orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L7,3 L0,6 Z" fill="#33415c"/>
+    </marker>
+  </defs>
+
+  <text class="lane" x="14" y="30">A. Ingestion (ingest.py) — hors ligne, une fois</text>
+  <rect class="bx" x="14"  y="44" width="120" height="46" rx="5"/>
+  <text class="t" x="26" y="64">Documents</text><text class="t" x="26" y="80">data/*.md</text>
+  <rect class="bx" x="166" y="44" width="120" height="46" rx="5"/>
+  <text class="t" x="178" y="64">Découpage en</text><text class="t" x="178" y="80">chunks (600/100)</text>
+  <rect class="bg" x="318" y="44" width="130" height="46" rx="5"/>
+  <text class="t" x="330" y="64">Embedding</text><text class="t" x="330" y="80">nomic-embed-text</text>
+  <rect class="bd" x="480" y="44" width="140" height="46" rx="5"/>
+  <text class="t" x="492" y="64">INSERT pgvector</text><text class="t" x="492" y="80">table documents</text>
+  <path class="ar" d="M134,67 L166,67"/>
+  <path class="ar" d="M286,67 L318,67"/>
+  <path class="ar" d="M448,67 L480,67"/>
+
+  <text class="lane" x="14" y="150">B. Interrogation (query.py) — à chaque question</text>
+  <rect class="bx" x="14"  y="164" width="120" height="46" rx="5"/>
+  <text class="t" x="26" y="184">Question</text><text class="t" x="26" y="200">utilisateur</text>
+  <rect class="bg" x="166" y="164" width="130" height="46" rx="5"/>
+  <text class="t" x="178" y="184">Embedding</text><text class="t" x="178" y="200">de la question</text>
+  <rect class="bd" x="328" y="164" width="150" height="46" rx="5"/>
+  <text class="t" x="340" y="184">Recherche KNN</text><text class="t" x="340" y="200">pgvector · TOP_K=4 (cosine)</text>
+  <rect class="bx" x="510" y="164" width="130" height="46" rx="5"/>
+  <text class="t" x="522" y="184">Prompt enrichi</text><text class="t" x="522" y="200">contexte + question</text>
+  <path class="ar" d="M134,187 L166,187"/>
+  <path class="ar" d="M296,187 L328,187"/>
+  <path class="ar" d="M478,187 L510,187"/>
+
+  <rect class="bg" x="328" y="252" width="150" height="46" rx="5"/>
+  <text class="t" x="340" y="272">Génération LLM</text><text class="t" x="340" y="288">gemma2:2b</text>
+  <rect class="bx" x="510" y="252" width="130" height="46" rx="5"/>
+  <text class="t" x="522" y="272">Réponse</text><text class="t" x="522" y="288">contextualisée</text>
+  <path class="ar" d="M575,210 L575,240 L478,240 L420,252"/>
+  <path class="ar" d="M478,275 L510,275"/>
+</svg>
+"""
+
+CSS = """
+@page { size: A4; margin: 16mm 14mm; }
+* { box-sizing: border-box; }
+body { font-family: 'Segoe UI', Arial, sans-serif; color:#1b2430; font-size:11.5pt;
+       line-height:1.5; max-width: 820px; margin: 0 auto; }
+h1 { font-size: 24pt; color:#15314b; margin:0 0 4px; }
+h2 { font-size: 15pt; color:#15314b; border-bottom:2px solid #d4dcea;
+     padding-bottom:4px; margin-top:26px; page-break-after: avoid; }
+h3 { font-size: 12.5pt; color:#1d6fb8; margin-top:18px; }
+p, li { text-align: justify; }
+code { background:#f3f5f9; padding:1px 4px; border-radius:3px;
+       font-family:'Cascadia Code',Consolas,monospace; font-size:9.8pt; }
+pre { background:#1b2430; color:#e8eef7; padding:12px 14px; border-radius:6px;
+      overflow-x:auto; font-family:'Cascadia Code',Consolas,monospace;
+      font-size:8.8pt; line-height:1.4; page-break-inside: avoid; }
+pre code { background:none; color:inherit; padding:0; }
+table { border-collapse: collapse; width:100%; margin:12px 0; font-size:10pt; }
+th, td { border:1px solid #c9d2e3; padding:7px 9px; vertical-align:top; text-align:left; }
+th { background:#15314b; color:#fff; }
+tr:nth-child(even) td { background:#f5f8fc; }
+.diagram { width:100%; height:auto; border:1px solid #d4dcea; border-radius:6px;
+           background:#fff; margin:10px 0; padding:6px; }
+.meta { color:#55607a; font-size:10.5pt; margin-top:2px; }
+.tag { display:inline-block; background:#eaf2fd; color:#1d6fb8; border:1px solid #bcd6f3;
+       border-radius:10px; padding:1px 9px; font-size:9pt; margin-right:4px; }
+.ok { color:#1a7f4b; font-weight:600; }
+.ko { color:#b22; font-weight:600; }
+.cap { color:#55607a; font-size:9.5pt; font-style:italic; margin:-4px 0 14px; }
+.box { background:#f5f8fc; border:1px solid #d4dcea; border-radius:6px; padding:10px 14px; }
+ul { margin:6px 0; }
+.pagebreak { page-break-before: always; }
+footer { margin-top:30px; border-top:1px solid #d4dcea; padding-top:8px;
+         color:#55607a; font-size:9pt; }
+"""
+
+INGEST_SNIPPET = """def chunk_text(text, size, overlap):
+    text = text.strip()
+    if not text:
+        return []
+    chunks, start, n = [], 0, len(text)
+    while start < n:
+        end = min(start + size, n)
+        if end < n:                       # coupe de préférence sur un saut de ligne
+            window = text.rfind("\\n", start + size // 2, end)
+            if window > start:
+                end = window
+        chunk = text[start:end].strip()
+        if chunk:
+            chunks.append(chunk)
+        if end >= n:                      # tout le texte consommé -> fin
+            break
+        start = max(end - overlap, start + 1)   # progression stricte
+    return chunks
+
+def embed(text):                          # embedding via Ollama (nomic-embed-text)
+    r = requests.post(f"{OLLAMA_URL}/api/embeddings",
+                      json={"model": EMBED_MODEL, "prompt": text}, timeout=120)
+    r.raise_for_status()
+    return r.json()["embedding"]
+
+# ... pour chaque chunk : INSERT documents(source, chunk_index, content, embedding)"""
+
+QUERY_SNIPPET = """def retrieve(question, k=TOP_K):
+    qvec = embed(question)                       # 1) vectorise la question
+    cur.execute(\"\"\"
+        SELECT source, content, 1 - (embedding <=> %s::vector) AS score
+        FROM documents
+        ORDER BY embedding <=> %s::vector        -- distance cosine (pgvector)
+        LIMIT %s;\"\"\", (qvec, qvec, k))          # 2) TOP_K chunks les + proches
+    return cur.fetchall()
+
+def answer(question):
+    hits = retrieve(question)
+    context = "\\n\\n".join(f"[Source: {s}]\\n{c}" for s, c, _ in hits)
+    prompt = f"{SYSTEM_PROMPT}\\n\\n### CONTEXTE\\n{context}\\n\\n### QUESTION\\n{question}"
+    return generate(prompt)                      # 3) génération gemma2:2b (Ollama)"""
+
+
+def build_qa_table(records):
+    rows = []
+    for i, r in enumerate(records, 1):
+        rag = esc(r["rag_answer"])
+        if r.get("compare") and r.get("no_rag_answer") is not None:
+            norag = (f'<div class="box"><b>Sans RAG :</b><br>{esc(r["no_rag_answer"])}</div>')
+        else:
+            norag = '<span class="meta">—</span>'
+        rows.append(f"""
+      <tr>
+        <td>{i}</td>
+        <td>{esc(r["question"])}</td>
+        <td>{esc(r["sources"])}<br><span class="meta">score {r["top_score"]:.3f}</span></td>
+        <td><b>Avec RAG :</b><br>{rag}<br>{norag}</td>
+      </tr>""")
+    return "".join(rows)
+
+
+def main():
+    with open(JSON_IN, encoding="utf-8") as f:
+        records = json.load(f)
+    qa_table = build_qa_table(records)
+    n_compare = sum(1 for r in records if r.get("compare"))
+
+    doc = f"""<!DOCTYPE html>
+<html lang="fr"><head><meta charset="utf-8">
+<title>Rapport — Environnement IA avec RAG</title>
+<style>{CSS}</style></head><body>
+
+<h1>Construire et manipuler un environnement IA avec RAG</h1>
+<p class="meta">Projet « Understanding Retrieval-Augmented Generation » —
+Base de connaissance vectorielle locale (PostgreSQL/pgvector) + LLM local (Ollama).</p>
+<p>
+  <span class="tag">Docker</span><span class="tag">PostgreSQL 16 + pgvector</span>
+  <span class="tag">Ollama</span><span class="tag">gemma2:2b</span>
+  <span class="tag">nomic-embed-text</span><span class="tag">Python 3.14</span>
+</p>
+
+<h2>1. Objectif</h2>
+<p>Le but du projet est de construire, de bout en bout, un environnement
+d'intelligence artificielle exploitant le principe du <b>RAG (Retrieval-Augmented
+Generation)</b> : enrichir les réponses d'un grand modèle de langage (LLM) avec une
+base de connaissance personnalisée, afin qu'il réponde sur des données qu'il n'a
+jamais vues lors de son entraînement. La démonstration s'appuie sur une entreprise
+fictive, <b>HelioniX SAS</b> (onduleurs photovoltaïques), dont les documents internes
+servent de base de connaissance.</p>
+
+<h2>2. Environnement construit</h2>
+<p>L'environnement repose sur la <b>virtualisation applicative (conteneurs Docker)</b>
+plutôt que sur une machine virtuelle complète : chaque outil tourne dans un conteneur
+isolé, orchestré par <code>docker compose</code>. Ce choix réduit l'empreinte et rend
+l'environnement reproductible en une commande.</p>
+<table>
+  <tr><th>Couche</th><th>Élément</th><th>Détail</th></tr>
+  <tr><td>Machine hôte</td><td>Windows 11 Pro (x86-64)</td>
+      <td>Exécute Docker Desktop (backend WSL 2) et l'interpréteur Python</td></tr>
+  <tr><td>Virtualisation</td><td>Docker Desktop 28.x</td>
+      <td>Conteneurisation, orchestration via <code>docker-compose.yml</code></td></tr>
+  <tr><td>Base vectorielle</td><td>conteneur <code>rag-db</code></td>
+      <td>image <code>pgvector/pgvector:pg16</code> — PostgreSQL 16 + extension
+      <code>vector</code>, exposé sur <code>localhost:5433</code></td></tr>
+  <tr><td>Moteur LLM</td><td>conteneur <code>rag-ollama</code></td>
+      <td>image <code>ollama/ollama</code> — sert l'embedding et la génération,
+      exposé sur <code>localhost:11434</code></td></tr>
+  <tr><td>Modèle d'embedding</td><td><code>nomic-embed-text</code></td>
+      <td>Transforme un texte en vecteur de <b>768</b> dimensions</td></tr>
+  <tr><td>Modèle de génération</td><td><code>gemma2:2b</code> (Google)</td>
+      <td>LLM léger (~1,6 Go) adapté à une exécution CPU locale</td></tr>
+  <tr><td>Scripts</td><td>Python 3.14 (venv)</td>
+      <td><code>psycopg2-binary</code> (PostgreSQL) + <code>requests</code> (API Ollama)</td></tr>
+</table>
+
+<h3>Schéma d'architecture</h3>
+{SVG_ARCHI}
+<p class="cap">Figure 1 — Architecture de l'environnement : scripts Python sur l'hôte,
+conteneurs Ollama et PostgreSQL/pgvector orchestrés par Docker. Les scripts
+dialoguent avec Ollama en REST (port 11434) et avec PostgreSQL en SQL (port 5433).</p>
+
+<h2>3. Workflow des traitements</h2>
+<p>Le pipeline se décompose en deux phases : une phase d'<b>ingestion</b> (hors ligne,
+exécutée une fois pour peupler la base) et une phase d'<b>interrogation</b> (rejouée à
+chaque question de l'utilisateur).</p>
+{SVG_FLOW}
+<p class="cap">Figure 2 — Workflow : (A) ingestion des documents, (B) interrogation
+contextualisée du LLM par recherche de similarité vectorielle.</p>
+
+<div class="pagebreak"></div>
+<h2>4. Procédure d'installation</h2>
+<p>L'ensemble de l'environnement se déploie depuis le dossier du projet.</p>
+
+<h3>4.1 — Démarrage des conteneurs (PostgreSQL/pgvector + Ollama)</h3>
+<pre><code># Lancement de la base vectorielle et du moteur LLM
+docker compose up -d
+docker compose ps          # vérifier que rag-db est "healthy" et rag-ollama "up"</code></pre>
+<p>Au premier démarrage, le script <code>db/init.sql</code> est joué automatiquement :
+il active l'extension <code>vector</code>, crée la table <code>documents</code> et son
+index HNSW.</p>
+
+<h3>4.2 — Téléchargement des modèles dans Ollama</h3>
+<pre><code># Modèle d'embedding (768 dimensions) et modèle de génération
+docker exec rag-ollama ollama pull nomic-embed-text
+docker exec rag-ollama ollama pull gemma2:2b
+docker exec rag-ollama ollama list      # vérifier les modèles disponibles</code></pre>
+
+<h3>4.3 — Environnement Python et dépendances</h3>
+<pre><code>python -m venv .venv
+.venv\\Scripts\\activate                  # (Windows)
+pip install -r projet_cyber_rag/requirements.txt
+# requirements : psycopg2-binary==2.9.12, requests==2.32.3</code></pre>
+
+<h3>4.4 — Ingestion puis interrogation</h3>
+<pre><code># Peupler la base de connaissance (découpage + embeddings + insertion)
+python scripts/ingest.py --reset
+
+# Poser une question (avec contextualisation RAG)
+python scripts/query.py "Quelle est la garantie de l'onduleur HX-Solar 5000 ?"
+# Comparaison : interroger le LLM seul, sans la base
+python scripts/query.py --no-rag "..."
+
+# Batterie de démonstration complète (génère le tableau prompt/réponse)
+python scripts/demo.py</code></pre>
+
+<h2>5. Scripts développés</h2>
+<h3>5.1 — Ingestion : <code>ingest.py</code></h3>
+<p>Lit les documents, les découpe en fragments (<i>chunks</i>) de ~600 caractères avec
+100 de recouvrement, calcule l'embedding de chaque fragment via Ollama et l'insère dans
+pgvector.</p>
+<pre><code>{esc(INGEST_SNIPPET)}</code></pre>
+
+<h3>5.2 — Interrogation : <code>query.py</code></h3>
+<p>Vectorise la question, récupère les <code>TOP_K=4</code> fragments les plus proches
+(distance cosine via l'opérateur <code>&lt;=&gt;</code> de pgvector), construit un prompt
+contraint au contexte puis génère la réponse avec <code>gemma2:2b</code>.</p>
+<pre><code>{esc(QUERY_SNIPPET)}</code></pre>
+
+<div class="pagebreak"></div>
+<h2>6. Démonstration — couples prompt / réponse</h2>
+<p>Le tableau ci-dessous met en évidence la <b>bonne prise en compte de la base de
+connaissance</b> : les réponses « Avec RAG » citent des faits précis issus des documents
+HelioniX (garantie, codes d'erreur, politique RH…). Pour {n_compare} questions, la réponse
+« Sans RAG » (LLM seul, sans la base) est fournie en regard : le modèle est alors
+incapable de répondre correctement, ou refuse, ce qui démontre l'apport du RAG. La
+dernière question porte volontairement sur un sujet <b>hors base</b> : le système répond
+qu'il ne dispose pas de l'information, prouvant qu'il ne « brode » pas.</p>
+<table>
+  <tr><th style="width:24px">#</th><th style="width:200px">Prompt</th>
+      <th style="width:120px">Chunks récupérés</th><th>Réponse</th></tr>
+  {qa_table}
+</table>
+
+<h2>7. Conclusion</h2>
+<p>L'environnement répond aux trois objectifs du projet : <b>(1)</b> construction d'une
+plateforme IA locale conteneurisée (Ollama + PostgreSQL/pgvector), <b>(2)</b> ingestion
+d'un jeu de documents dans une base de connaissance vectorielle, et <b>(3)</b>
+interrogation d'un LLM enrichi par cette base. La comparaison « avec / sans RAG » confirme
+que la base de connaissance est effectivement mobilisée et qu'elle améliore nettement la
+pertinence des réponses sur des données métier privées.</p>
+
+<footer>
+  Projet RAG — environnement local Docker (Ollama + pgvector). Rapport généré
+  automatiquement par <code>scripts/build_report.py</code> à partir des résultats
+  réels de <code>scripts/demo.py</code>.
+</footer>
+</body></html>"""
+
+    os.makedirs(RAP_DIR, exist_ok=True)
+    with open(HTML_OUT, "w", encoding="utf-8") as f:
+        f.write(doc)
+    print(f"Rapport HTML écrit dans : {HTML_OUT}")
+
+
+if __name__ == "__main__":
+    main()

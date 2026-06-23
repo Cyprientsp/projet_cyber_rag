@@ -18,6 +18,10 @@ import glob
 import requests
 import psycopg2
 
+# Console Windows : force UTF-8 pour éviter les UnicodeEncodeError (cp1252).
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+
 from config import DB_CONFIG, OLLAMA_URL, EMBED_MODEL, CHUNK_SIZE, CHUNK_OVERLAP
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), "..", "data")
@@ -27,20 +31,23 @@ def chunk_text(text: str, size: int, overlap: int) -> list[str]:
     """Découpe le texte en morceaux de ~size caractères avec recouvrement.
     On coupe de préférence sur un saut de paragraphe/ligne proche pour rester lisible."""
     text = text.strip()
-    chunks, start = [], 0
-    while start < len(text):
-        end = min(start + size, len(text))
+    if not text:
+        return []
+    chunks, start, n = [], 0, len(text)
+    while start < n:
+        end = min(start + size, n)
         # essaie de couper sur une fin de paragraphe/ligne dans la zone [start+size/2, end]
-        if end < len(text):
+        if end < n:
             window = text.rfind("\n", start + size // 2, end)
-            if window != -1:
+            if window > start:
                 end = window
         chunk = text[start:end].strip()
         if chunk:
             chunks.append(chunk)
-        start = max(end - overlap, end) if end <= start else end - overlap
-        if start < 0:
-            start = end
+        if end >= n:           # tout le texte a été consommé → fin
+            break
+        # avance avec recouvrement, en garantissant une progression stricte
+        start = max(end - overlap, start + 1)
     return chunks
 
 
