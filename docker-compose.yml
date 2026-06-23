@@ -1,0 +1,47 @@
+services:
+  # ----------------------------------------------------------------------------
+  # Base de données vectorielle : PostgreSQL + extension pgvector
+  # Stocke les chunks de documents et leurs embeddings (vecteurs).
+  # ----------------------------------------------------------------------------
+  db:
+    image: pgvector/pgvector:pg16
+    container_name: rag-db
+    environment:
+      POSTGRES_USER: raguser
+      POSTGRES_PASSWORD: ragpass
+      POSTGRES_DB: ragdb
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      # Script SQL d'initialisation joué au premier démarrage (création extension + table)
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U raguser -d ragdb"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # ----------------------------------------------------------------------------
+  # Moteur LLM local : Ollama
+  # Sert à la fois le modèle de génération et le modèle d'embedding.
+  # ----------------------------------------------------------------------------
+  ollama:
+    image: ollama/ollama:latest
+    container_name: rag-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollamadata:/root/.ollama
+    # Décommenter le bloc ci-dessous si un GPU NVIDIA est disponible :
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: all
+    #           capabilities: [gpu]
+
+volumes:
+  pgdata:
+  ollamadata:
