@@ -33,12 +33,12 @@ DEMO_QUESTIONS = [
     ("Quelle est la garantie constructeur de l'onduleur HX-Solar 5000 ?", True),
     ("Que signifie le code d'erreur E-204 sur le HX-Solar 5000 ?", True),
     ("Combien de jours de télétravail par semaine sont autorisés chez HelioniX, "
-     "et quel jour est obligatoirement travaillé au bureau ?", False),
+     "et quel jour est obligatoirement travaillé au bureau ?", True),
     ("Quel est le rendement européen du HX-Solar 5000 et sur quel port TCP "
-     "fonctionne le protocole SunLink v3 ?", False),
-    ("Qui est la présidente de HelioniX et quel était le chiffre d'affaires 2024 ?", False),
+     "fonctionne le protocole SunLink v3 ?", True),
+    ("Qui est la présidente de HelioniX et quel était le chiffre d'affaires 2024 ?", True),
     ("Quelle est la valeur faciale du ticket restaurant et la prise en charge "
-     "employeur chez HelioniX ?", False),
+     "employeur chez HelioniX ?", True),
     ("Quelle est la capitale de l'Australie ?", True),  # hors base → doit refuser
 ]
 
@@ -84,15 +84,17 @@ def main():
         lines.append(f"**Prompt :** {q}\n")
         lines.append(f"**Chunks récupérés :** {sources} "
                      f"(meilleur score cosine = {top_score:.3f})\n")
-        lines.append(f"**Réponse AVEC RAG :**\n\n> {rag_rep}\n")
+        lines.append(f"**Réponse AVEC RAG** _(temps : {dt:.1f} s)_ **:**\n\n> {rag_rep}\n")
 
         rec = {"question": q, "sources": sources, "top_score": round(top_score, 3),
-               "rag_answer": rag_rep, "no_rag_answer": None, "compare": compare}
+               "rag_answer": rag_rep, "rag_time_s": round(dt, 1),
+               "no_rag_answer": None, "no_rag_time_s": None, "compare": compare}
         if compare:
             norag_rep, dt2 = run_no_rag(q)
-            print(f"  NO-RAG -> {norag_rep}")
-            lines.append(f"**Réponse SANS RAG (LLM seul) :**\n\n> {norag_rep}\n")
+            print(f"  NO-RAG -> {norag_rep}  ({dt2:.1f}s)")
+            lines.append(f"**Réponse SANS RAG (LLM seul)** _(temps : {dt2:.1f} s)_ **:**\n\n> {norag_rep}\n")
             rec["no_rag_answer"] = norag_rep
+            rec["no_rag_time_s"] = round(dt2, 1)
         records.append(rec)
 
     with open(OUT_FILE, "w", encoding="utf-8") as f:

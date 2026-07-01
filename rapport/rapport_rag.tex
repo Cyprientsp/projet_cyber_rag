@@ -24,6 +24,9 @@
 \definecolor{codekw}{HTML}{1D6FB8}
 \definecolor{codestr}{HTML}{1A7F4B}
 
+% Lien du depot du projet (reutilise partout)
+\newcommand{\projeturl}{https://github.com/Cyprientsp/projet_cyber_rag}
+
 \titleformat{\section}{\Large\bfseries\color{titleblue}}{\thesection}{0.6em}{}
 \titleformat{\subsection}{\large\bfseries\color{accent}}{\thesubsection}{0.6em}{}
 
@@ -48,13 +51,52 @@
 
 \begin{document}
 
-\begin{center}
-  {\LARGE\bfseries\color{titleblue} Construire et manipuler un environnement IA avec RAG}\\[4pt]
-  {\large Retrieval-Augmented Generation --- base vectorielle locale + LLM local}\\[6pt]
-  {\small PostgreSQL/pgvector \textperiodcentered{} Ollama (gemma2:2b, nomic-embed-text)
-   \textperiodcentered{} Docker \textperiodcentered{} Python 3.14}
-\end{center}
-\vspace{4pt}\hrule\vspace{10pt}
+% =====================================================================
+% PAGE DE GARDE
+% =====================================================================
+\begin{titlepage}
+  \centering
+  \vspace*{1.2cm}
+
+  {\large\bfseries\color{accent}\MakeUppercase{Rapport de projet}}\\[3pt]
+  {\normalsize\color{codecmt}Cybersécurité \textperiodcentered{} Intelligence artificielle}\\[1.7cm]
+
+  {\color{accent}\rule{\linewidth}{2pt}}\\[12pt]
+  {\Huge\bfseries\color{titleblue}Construire et manipuler\\[8pt]%
+   un environnement IA avec RAG\par}
+  \vspace{14pt}
+  {\Large\color{accent}Retrieval-Augmented Generation\par}
+  \vspace{2pt}
+  {\large\color{codecmt}Base vectorielle locale + LLM local\par}
+  \vspace{12pt}
+  {\color{accent}\rule{\linewidth}{2pt}}\\[1.7cm]
+
+  % --- Pile technique ---
+  {\renewcommand{\arraystretch}{1.45}%
+   \begin{tabular}{r@{\hspace{1.3em}}l}
+     \color{codecmt}Base vectorielle   & PostgreSQL 16 / pgvector\\
+     \color{codecmt}Moteur LLM         & Ollama --- gemma2:2b\\
+     \color{codecmt}Embeddings         & nomic-embed-text (768 d.)\\
+     \color{codecmt}Conteneurisation   & Docker Desktop (WSL 2)\\
+     \color{codecmt}Scripts            & Python 3.14\\
+   \end{tabular}\par}
+
+  \vfill
+
+  % --- Depot du projet ---
+  \fcolorbox{accent}{codebg}{%
+    \parbox{0.82\linewidth}{\centering\vspace{5pt}%
+      {\footnotesize\bfseries\color{titleblue}\MakeUppercase{Dépôt du projet}}\\[4pt]
+      \href{\projeturl}{\ttfamily\color{accent}github.com/Cyprientsp/projet\_cyber\_rag}%
+      \vspace{5pt}}%
+  }\\[1.5cm]
+
+  % --- Auteur / date ---
+  {\large\bfseries\color{titleblue}Cyprien TCharlaté.\par}% <-- a personnaliser
+  \vspace{4pt}
+  {\color{codecmt}\today}
+
+\end{titlepage}
 
 \section{Objectif}
 Le but du projet est de construire, de bout en bout, un environnement d'intelligence
@@ -62,8 +104,12 @@ artificielle exploitant le principe du \textbf{RAG (Retrieval-Augmented Generati
 enrichir les reponses d'un grand modele de langage (LLM) avec une base de connaissance
 personnalisee, afin qu'il reponde sur des donnees qu'il n'a jamais vues lors de son
 entrainement. La demonstration s'appuie sur une entreprise \textbf{fictive}, HelioniX
-SAS (onduleurs photovoltaiques), dont les documents internes servent de base de
-connaissance.
+SAS (onduleurs photovoltaiques), dont les documents internes sous forment de markdown servent de base de connaissance.
+
+\medskip
+\noindent\textbf{Code source} --- L'ensemble des scripts, des documents de demonstration
+et de la configuration Docker est disponible sur le depot public :
+\href{\projeturl}{\texttt{\color{accent}github.com/Cyprientsp/projet\_cyber\_rag}}.
 
 \section{Environnement construit}
 L'environnement repose sur la \textbf{virtualisation applicative (conteneurs Docker)}
@@ -162,10 +208,14 @@ chaque question de l'utilisateur).
 \begin{center}\footnotesize\itshape Figure 2 --- Workflow : (A) ingestion des documents,
 (B) interrogation contextualisee du LLM par recherche de similarite vectorielle.\end{center}
 
-\newpage
+
 \section{Procedure d'installation}
 L'ensemble de l'environnement se deploie depuis le dossier du projet.
 \begin{lstlisting}[language=bash]
+# 0) Recuperer le projet
+git clone https://github.com/Cyprientsp/projet_cyber_rag.git
+cd projet_cyber_rag
+
 # 1) Demarrer la base vectorielle et le moteur LLM
 docker compose up -d
 docker compose ps                      # rag-db "healthy", rag-ollama "up"
@@ -188,7 +238,7 @@ python scripts/demo.py                 # batterie de demonstration complete
 Au premier demarrage, le script \texttt{db/init.sql} est joue automatiquement : il active
 l'extension \texttt{vector}, cree la table \texttt{documents} et son index HNSW.
 
-\section{Scripts developpes}
+\section{Scripts}
 \subsection{Ingestion : \texttt{ingest.py}}
 Lit les documents, les decoupe en fragments (\textit{chunks}) d'environ 600 caracteres avec
 100 de recouvrement, calcule l'embedding de chaque fragment via Ollama et l'insere dans
@@ -239,39 +289,46 @@ def answer(question):
     return generate(prompt)                        # 3) generation gemma2:2b (Ollama)
 \end{lstlisting}
 
-\newpage
+
 \section{Demonstration : couples prompt / reponse}
 Le tableau ci-dessous met en evidence la \textbf{bonne prise en compte de la base de
 connaissance} : les reponses \guillemotleft{} Avec RAG \guillemotright{} citent des faits
-precis issus des documents
-HelioniX. Pour 3 questions, la reponse \guillemotleft{} Sans RAG \guillemotright{} (LLM seul) est
-fournie en regard : le modele est alors incapable de repondre correctement, ce qui
-demontre l'apport du RAG. La derniere question porte volontairement sur un sujet
-\textbf{hors base} : le systeme repond qu'il ne dispose pas de l'information, prouvant
-qu'il ne brode pas.
+precis issus des documents HelioniX. Pour chaque question, la reponse
+\guillemotleft{} Sans RAG \guillemotright{} (LLM seul) est fournie en regard : le modele
+adopte alors l'un des deux comportements de defaut --- soit il \textbf{invente} une reponse
+plausible mais fausse (lignes 1 a 4), soit il \textbf{refuse} faute d'acces aux donnees
+(lignes 5 et 6) --- ce qui demontre l'apport du RAG. La derniere question porte
+volontairement sur un sujet \textbf{hors base} : le systeme repond qu'il ne dispose pas de
+l'information, prouvant qu'il ne brode pas. La colonne \textbf{Temps} donne la duree de
+generation cote serveur (secondes).
 
 \renewcommand{\arraystretch}{1.25}
-\begin{longtable}{|>{\raggedright\arraybackslash}p{0.4cm}
-                  |>{\raggedright\arraybackslash}p{3.6cm}
-                  |>{\raggedright\arraybackslash}p{2.2cm}
-                  |>{\raggedright\arraybackslash}p{7.6cm}|}
+\begin{longtable}{|>{\raggedright\arraybackslash}p{0.35cm}
+                  |>{\raggedright\arraybackslash}p{3.1cm}
+                  |>{\raggedright\arraybackslash}p{1.6cm}
+                  |>{\centering\arraybackslash}p{1.35cm}
+                  |>{\raggedright\arraybackslash}p{6.5cm}|}
 \hline
 \rowcolor{titleblue!12}
-\textbf{\#} & \textbf{Prompt} & \textbf{Chunks} & \textbf{Reponse} \\ \hline
+\textbf{\#} & \textbf{Prompt} & \textbf{Chunks} & \textbf{Temps (s)} & \textbf{Reponse} \\ \hline
 \endfirsthead
 \hline
 \rowcolor{titleblue!12}
-\textbf{\#} & \textbf{Prompt} & \textbf{Chunks} & \textbf{Reponse} \\ \hline
+\textbf{\#} & \textbf{Prompt} & \textbf{Chunks} & \textbf{Temps (s)} & \textbf{Reponse} \\ \hline
 \endhead
-1 & Quelle est la garantie constructeur de l'onduleur HX-Solar 5000 ? & 3 source(s)\newline score 0.812 & \textbf{Avec RAG :} 12 ans\newline\newline \textbf{Sans RAG :} La garantie constructeur de l'onduleur HX-Solar 5000 est de \textbf{10 ans} sur le matériel et \textbf{5 ans} sur les composants électroniques. \\ \hline
-2 & Que signifie le code d'erreur E-204 sur le HX-Solar 5000 ? & 3 source(s)\newline score 0.787 & \textbf{Avec RAG :} Le code d'erreur E-204 signale une surchauffe du transformateur : il faut vérifier la ventilation et contacter le SAV HelioniX si le défaut persiste.\newline\newline \textbf{Sans RAG :} Le code d'erreur E-204 sur le HX-Solar 5000 indique un \textbf{défaut de communication avec la centrale solaire}. \\ \hline
-3 & Combien de jours de télétravail par semaine sont autorisés chez HelioniX, et quel jour est obligatoirement travaillé au bureau ? & 3 source(s)\newline score 0.803 & \textbf{Avec RAG :} HelioniX autorise jusqu'à 3 jours de télétravail par semaine pour les postes éligibles. Le mardi est un jour de présence obligatoire au bureau pour toutes les équipes (réunion hebdomadaire « SunSync »). \\ \hline
-4 & Quel est le rendement européen du HX-Solar 5000 et sur quel port TCP fonctionne le protocole SunLink v3 ? & 2 source(s)\newline score 0.786 & \textbf{Avec RAG :} Le rendement européen du HX-Solar 5000 est de 97,8 \%. Le protocole SunLink v3 fonctionne sur le port TCP 8770. \\ \hline
-5 & Qui est la présidente de HelioniX et quel était le chiffre d'affaires 2024 ? & 3 source(s)\newline score 0.757 & \textbf{Avec RAG :} Amélie Rouanet est la présidente de HelioniX. Le chiffre d'affaires 2024 était de 38,6 millions d'euros. \\ \hline
-6 & Quelle est la valeur faciale du ticket restaurant et la prise en charge employeur chez HelioniX ? & 3 source(s)\newline score 0.778 & \textbf{Avec RAG :} La valeur faciale du ticket restaurant est de 11 \texteuro{} et la prise en charge employeur est de 6,60 \texteuro{}. \\ \hline
-7 & Quelle est la capitale de l'Australie ? & 3 source(s)\newline score 0.597 & \textbf{Avec RAG :} Je ne dispose pas de cette information dans ma base de connaissance.\newline\newline \textbf{Sans RAG :} Canberra  \\ \hline
+1 & Quelle est la garantie constructeur de l'onduleur HX-Solar 5000 ? & 3 src\newline score 0,812 & RAG 61,8\textsuperscript{*}\newline seul 0,7 & \textbf{Avec RAG :} 12 ans\newline\newline \textbf{Sans RAG (invente) :} La garantie est de \textbf{10 ans} sur le matériel et \textbf{5 ans} sur les composants électroniques. \\ \hline
+2 & Que signifie le code d'erreur E-204 sur le HX-Solar 5000 ? & 3 src\newline score 0,787 & RAG 0,6\newline seul 0,7 & \textbf{Avec RAG :} Le code E-204 signale une \textbf{surchauffe du transformateur}.\newline\newline \textbf{Sans RAG (invente) :} Le code E-204 indique un \textbf{défaut de communication avec la batterie}. \\ \hline
+3 & Combien de jours de télétravail par semaine sont autorisés chez HelioniX, et quel jour est obligatoirement travaillé au bureau ? & 3 src\newline score 0,803 & RAG 9,3\newline seul 0,6 & \textbf{Avec RAG :} Jusqu'à \textbf{3 jours} de télétravail ; le \textbf{mardi} est un jour de présence obligatoire (réunion « SunSync »).\newline\newline \textbf{Sans RAG (invente) :} \guillemotleft{} HelioniX n'a pas fixé de nombre maximum ; un jour au bureau est obligatoire chaque semaine \guillemotright{} (jour non identifié). \\ \hline
+4 & Quel est le rendement européen du HX-Solar 5000 et sur quel port TCP fonctionne le protocole SunLink v3 ? & 2 src\newline score 0,786 & RAG 0,6\newline seul 0,7 & \textbf{Avec RAG :} Rendement européen \textbf{97,8 \%} ; SunLink v3 sur le \textbf{port TCP 8770}.\newline\newline \textbf{Sans RAG (invente) :} \guillemotleft{} Rendement non spécifié publiquement ; SunLink v3 fonctionne sur le \textbf{port TCP 80} \guillemotright{} (faux). \\ \hline
+5 & Qui est la présidente de HelioniX et quel était le chiffre d'affaires 2024 ? & 3 src\newline score 0,757 & RAG 0,7\newline seul 1,0 & \textbf{Avec RAG :} \textbf{Amélie Rouanet} ; chiffre d'affaires 2024 de \textbf{38,6 M\texteuro{}}.\newline\newline \textbf{Sans RAG (refus) :} \guillemotleft{} Je n'ai pas accès aux données financières d'une entreprise ; consultez le site de HelioniX \guillemotright{}. \\ \hline
+6 & Quelle est la valeur faciale du ticket restaurant et la prise en charge employeur chez HelioniX ? & 3 src\newline score 0,778 & RAG 0,7\newline seul 1,5 & \textbf{Avec RAG :} Valeur faciale \textbf{11 \texteuro{}} ; prise en charge employeur \textbf{6,60 \texteuro{}}.\newline\newline \textbf{Sans RAG (refus) :} \guillemotleft{} Je n'ai pas accès aux informations spécifiques sur les politiques d'HelioniX \guillemotright{}. \\ \hline
+7 & Quelle est la capitale de l'Australie ? \textit{(hors base)} & 3 src\newline score 0,597 & RAG 7,1\newline seul 0,5 & \textbf{Avec RAG :} \guillemotleft{} Je ne dispose pas de cette information dans ma base de connaissance \guillemotright{}.\newline\newline \textbf{Sans RAG :} Canberra. \\ \hline
 \end{longtable}
-
+\noindent\footnotesize\textsuperscript{*} Première requête : la durée inclut le
+chargement initial du modèle \texttt{gemma2:2b} en mémoire GPU (VRAM). Une fois le modèle
+résident, les requêtes suivantes s'exécutent en \texttt{$\sim$0,6 s} (voir lignes 2 et 4).
+\normalsize
+\newpage
 \section{Conclusion}
 L'environnement repond aux trois objectifs du projet : \textbf{(1)} construction d'une
 plateforme IA locale conteneurisee (Ollama + PostgreSQL/pgvector), \textbf{(2)} ingestion
@@ -279,5 +336,98 @@ d'un jeu de documents dans une base de connaissance vectorielle, et \textbf{(3)}
 interrogation d'un LLM enrichi par cette base. La comparaison \guillemotleft{} avec / sans RAG \guillemotright{}
 confirme que la base de connaissance est effectivement mobilisee et qu'elle ameliore
 nettement la pertinence des reponses sur des donnees metier privees.
+
+\medskip
+\noindent\small Depot du projet :
+\href{\projeturl}{\texttt{\color{accent}github.com/Cyprientsp/projet\_cyber\_rag}}
+\newpage
+\section{Annexe}
+
+Voici les documents fictifs utilisés dans le RAG :
+
+\begin{lstlisting}[language=markdown]
+# HelioniX SAS — Fiche d'entreprise (document interne fictif)
+
+## Identité
+HelioniX SAS est une entreprise fictive créée le 14 mars 2019 à Nantes (France).
+Son numéro SIREN fictif est 902 451 337. Le siège social est situé au
+27 quai de la Fosse, 44000 Nantes. L'entreprise compte 142 salariés en 2025.
+
+## Activité
+HelioniX conçoit des onduleurs photovoltaïques intelligents pour l'autoconsommation
+résidentielle. Son produit phare est l'onduleur **HX-Solar 5000**, d'une puissance
+de 5 kW, garanti 12 ans, avec un rendement européen de 97,8 %.
+
+## Dirigeants
+- Présidente : Amélie Rouanet
+- Directeur technique (CTO) : Karim Belhadj
+- Directrice financière (CFO) : Sonia Vaccaro
+
+## Chiffres clés 2024
+- Chiffre d'affaires : 38,6 millions d'euros
+- Marge nette : 11 %
+- Onduleurs vendus : 21 400 unités
+- Marchés principaux : France (62 %), Espagne (23 %), Italie (15 %)
+\end{lstlisting}
+
+\begin{lstlisting}[language=markdown]
+# HX-Solar 5000 — Fiche produit technique (fictif)
+
+## Présentation
+L'onduleur HX-Solar 5000 est le produit phare de HelioniX SAS. Il transforme le
+courant continu des panneaux solaires en courant alternatif pour la maison.
+
+## Caractéristiques techniques
+- Puissance nominale : 5 000 W (5 kW)
+- Tension d'entrée MPPT : 120 V à 500 V
+- Nombre de trackers MPPT : 2
+- Rendement européen : 97,8 %
+- Rendement maximal : 98,4 %
+- Protection : IP65 (utilisable en extérieur)
+- Poids : 12,3 kg
+- Température de fonctionnement : -25 °C à +60 °C
+- Garantie constructeur : 12 ans
+
+## Connectivité
+Le HX-Solar 5000 intègre le module de supervision **HelioCloud**, accessible via
+l'application mobile HelioniX. Le protocole de communication interne se nomme
+**SunLink v3** et fonctionne sur le port TCP 8770.
+
+## Prix public conseillé
+Le prix public conseillé est de 1 690 € HT (hors pose), en avril 2025.
+
+## Référence SAV
+Le code d'erreur **E-204** signale une surchauffe du transformateur : il faut
+vérifier la ventilation et contacter le SAV HelioniX si le défaut persiste.
+
+\end{lstlisting}
+
+\begin{lstlisting}[language=markdown]
+# HelioniX SAS — Politique RH et congés (document interne fictif)
+
+## Télétravail
+Depuis le 1er janvier 2024, HelioniX autorise jusqu'à 3 jours de télétravail par
+semaine pour les postes éligibles. Le mardi est un jour de présence obligatoire
+au bureau pour toutes les équipes (réunion hebdomadaire « SunSync »).
+
+## Congés
+- Congés payés : 25 jours ouvrés par an.
+- RTT : 11 jours par an pour les cadres au forfait.
+- Congé « énergie verte » : 2 jours supplémentaires par an offerts aux salariés
+  ayant équipé leur logement d'une installation photovoltaïque.
+
+## Tickets restaurant
+La valeur faciale du ticket restaurant est de 11 €, prise en charge à 60 % par
+l'employeur (soit 6,60 € par titre).
+
+## Prime annuelle
+La prime de performance annuelle, appelée **prime SolarBonus**, peut atteindre
+jusqu'à 8 % du salaire brut annuel selon l'atteinte des objectifs d'équipe.
+
+## Contact RH
+Toute demande RH doit être adressée à Sonia Vaccaro (CFO/RH par intérim) via
+l'adresse interne rh@helionix.example.
+
+\end{lstlisting}
 
 \end{document}

@@ -4,15 +4,19 @@
     "sources": "entreprise_helionix.md, politique_rh_helionix.md, produit_hx_solar_5000.md",
     "top_score": 0.812,
     "rag_answer": "12 ans",
+    "rag_time_s": 61.8,
     "no_rag_answer": "La garantie constructeur de l'onduleur HX-Solar 5000 est de **10 ans** sur le matériel et **5 ans** sur les composants électroniques.",
+    "no_rag_time_s": 0.7,
     "compare": true
   },
   {
     "question": "Que signifie le code d'erreur E-204 sur le HX-Solar 5000 ?",
     "sources": "entreprise_helionix.md, politique_rh_helionix.md, produit_hx_solar_5000.md",
     "top_score": 0.787,
-    "rag_answer": "Le code d'erreur E-204 signale une surchauffe du transformateur : il faut vérifier la ventilation et contacter le SAV HelioniX si le défaut persiste.",
-    "no_rag_answer": "Le code d'erreur E-204 sur le HX-Solar 5000 indique un **défaut de communication avec la centrale solaire**.",
+    "rag_answer": "Le code d'erreur E-204 signale une surchauffe du transformateur.",
+    "rag_time_s": 0.6,
+    "no_rag_answer": "Le code d'erreur E-204 sur le HX-Solar 5000 indique un **défaut de communication avec la batterie**.",
+    "no_rag_time_s": 0.7,
     "compare": true
   },
   {
@@ -20,39 +24,49 @@
     "sources": "entreprise_helionix.md, politique_rh_helionix.md, produit_hx_solar_5000.md",
     "top_score": 0.803,
     "rag_answer": "HelioniX autorise jusqu'à 3 jours de télétravail par semaine pour les postes éligibles. Le mardi est un jour de présence obligatoire au bureau pour toutes les équipes (réunion hebdomadaire « SunSync »).",
-    "no_rag_answer": null,
-    "compare": false
+    "rag_time_s": 9.3,
+    "no_rag_answer": "HelioniX n'a pas fixé de nombre de jours de télétravail maximum par semaine.  Un jour de travail au bureau est obligatoire chaque semaine.",
+    "no_rag_time_s": 0.6,
+    "compare": true
   },
   {
     "question": "Quel est le rendement européen du HX-Solar 5000 et sur quel port TCP fonctionne le protocole SunLink v3 ?",
     "sources": "politique_rh_helionix.md, produit_hx_solar_5000.md",
     "top_score": 0.786,
     "rag_answer": "Le rendement européen du HX-Solar 5000 est de 97,8 %. Le protocole SunLink v3 fonctionne sur le port TCP 8770.",
-    "no_rag_answer": null,
-    "compare": false
+    "rag_time_s": 0.6,
+    "no_rag_answer": "Le rendement européen du HX-Solar 5000 n'est pas spécifié publiquement.  Le protocole SunLink v3 fonctionne sur **port TCP 80**.",
+    "no_rag_time_s": 0.7,
+    "compare": true
   },
   {
     "question": "Qui est la présidente de HelioniX et quel était le chiffre d'affaires 2024 ?",
     "sources": "entreprise_helionix.md, politique_rh_helionix.md, produit_hx_solar_5000.md",
     "top_score": 0.757,
     "rag_answer": "Amélie Rouanet est la présidente de HelioniX. Le chiffre d'affaires 2024 était de 38,6 millions d'euros.",
-    "no_rag_answer": null,
-    "compare": false
+    "rag_time_s": 0.7,
+    "no_rag_answer": "Je n'ai pas accès à des informations en temps réel, y compris les données financières spécifiques comme le chiffre d'affaires d'une entreprise.  Pour obtenir ces informations, je vous recommande de consulter le site web de HelioniX ou de contacter l'entreprise directement.",
+    "no_rag_time_s": 1.0,
+    "compare": true
   },
   {
     "question": "Quelle est la valeur faciale du ticket restaurant et la prise en charge employeur chez HelioniX ?",
     "sources": "entreprise_helionix.md, politique_rh_helionix.md, produit_hx_solar_5000.md",
     "top_score": 0.778,
     "rag_answer": "La valeur faciale du ticket restaurant est de 11 € et la prise en charge employeur est de 6,60 €.",
-    "no_rag_answer": null,
-    "compare": false
+    "rag_time_s": 0.7,
+    "no_rag_answer": "Je n'ai pas accès aux informations spécifiques sur les politiques d'HelioniX, y compris la valeur faciale du ticket restaurant et la prise en charge employeur. \n\n**Pour obtenir ces informations, je vous recommande de consulter:**\n\n* **Le site web d'HelioniX :**  Ils pourraient avoir une section dédiée aux conditions de travail ou à l'information des employés.\n* **Contacter directement HelioniX :**  Vous pouvez les contacter par email ou téléphone pour demander des informations précises.",
+    "no_rag_time_s": 1.5,
+    "compare": true
   },
   {
     "question": "Quelle est la capitale de l'Australie ?",
     "sources": "entreprise_helionix.md, politique_rh_helionix.md, produit_hx_solar_5000.md",
     "top_score": 0.597,
     "rag_answer": "Je ne dispose pas de cette information dans ma base de connaissance.",
+    "rag_time_s": 7.1,
     "no_rag_answer": "Canberra 🇦🇺",
+    "no_rag_time_s": 0.5,
     "compare": true
   }
 ]
