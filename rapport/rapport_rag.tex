@@ -92,7 +92,7 @@
   }\\[1.5cm]
 
   % --- Auteur / date ---
-  {\large\bfseries\color{titleblue}Cyprien Charlaté.\par}% <-- a personnaliser
+  {\large\bfseries\color{titleblue}Cyprien Charlaté\par}
   \vspace{4pt}
   {\color{codecmt}\today}
 
@@ -101,50 +101,51 @@
 \section{Objectif}
 Le but du projet est de construire, de bout en bout, un environnement d'intelligence
 artificielle exploitant le principe du \textbf{RAG (Retrieval-Augmented Generation)} :
-enrichir les reponses d'un grand modele de langage (LLM) avec une base de connaissance
-personnalisee, afin qu'il reponde sur des donnees qu'il n'a jamais vues lors de son
-entrainement. La demonstration s'appuie sur une entreprise \textbf{fictive}, HelioniX
-SAS (onduleurs photovoltaiques), dont les documents internes sous forme de markdown servent de base de connaissance. Ils ont été générés à partir de Claude Code.
+enrichir les réponses d'un grand modèle de langage (LLM) avec une base de connaissance
+personnalisée, afin qu'il réponde sur des données qu'il n'a jamais vues lors de son
+entraînement. La démonstration s'appuie sur une entreprise \textbf{fictive}, HelioniX
+SAS (onduleurs photovoltaïques), dont les documents internes sous forme de markdown
+servent de base de connaissance. Ils ont été générés à partir de Claude Code.
 
 \medskip
-\noindent\textbf{Code source} --- L'ensemble des scripts, des documents de demonstration
-et de la configuration Docker est disponible sur le depot public :
+\noindent\textbf{Code source} --- L'ensemble des scripts, des documents de démonstration
+et de la configuration Docker est disponible sur le dépôt public :
 \href{\projeturl}{\texttt{\color{accent}github.com/Cyprientsp/projet\_cyber\_rag}}.
 
 \section{Environnement construit}
 L'environnement repose sur la \textbf{virtualisation applicative (conteneurs Docker)}
-plutot que sur une machine virtuelle complete : chaque outil tourne dans un conteneur
-isole, orchestre par \texttt{docker compose}. Ce choix reduit l'empreinte et rend
+plutôt que sur une machine virtuelle complète : chaque outil tourne dans un conteneur
+isolé, orchestré par \texttt{docker compose}. Ce choix réduit l'empreinte et rend
 l'environnement reproductible en une commande.
 
 \medskip
-\noindent\textbf{Machine hote et machine invitee.} La \textbf{machine hote} est le poste
+\noindent\textbf{Machine hôte et machine invitée.} La \textbf{machine hôte} est le poste
 physique sous Windows 11 Pro. Docker Desktop s'appuie sur \textbf{WSL 2}
 (\textit{Windows Subsystem for Linux}), qui est une \textbf{machine virtuelle Linux
-legere} executee par l'hyperviseur Hyper-V : c'est cette VM qui joue le role de
-\textbf{machine invitee} et heberge le moteur Docker ainsi que les conteneurs
-\texttt{rag-db} et \texttt{rag-ollama}. On combine donc virtualisation systeme (l'invite
-Linux de WSL 2) et virtualisation applicative (les conteneurs) au sein d'une meme pile.
+légère} exécutée par l'hyperviseur Hyper-V : c'est cette VM qui joue le rôle de
+\textbf{machine invitée} et héberge le moteur Docker ainsi que les conteneurs
+\texttt{rag-db} et \texttt{rag-ollama}. On combine donc virtualisation système (l'invité
+Linux de WSL 2) et virtualisation applicative (les conteneurs) au sein d'une même pile.
 
 \begin{center}
 \renewcommand{\arraystretch}{1.3}
 \begin{tabular}{>{\raggedright\arraybackslash}p{2.6cm} >{\raggedright\arraybackslash}p{3.6cm} >{\raggedright\arraybackslash}p{8.4cm}}
 \toprule
-\textbf{Couche} & \textbf{Element} & \textbf{Detail} \\
+\textbf{Couche} & \textbf{Élément} & \textbf{Détail} \\
 \midrule
-Machine hote & Windows 11 Pro (x86-64) & Execute Docker Desktop (backend WSL 2) et l'interpreteur Python \\
-Machine invitee & VM Linux WSL 2 & Machine virtuelle legere (Hyper-V) qui heberge le moteur Docker et les conteneurs \\
+Machine hôte & Windows 11 Pro (x86-64) & Exécute Docker Desktop (backend WSL 2) et l'interpréteur Python \\
+Machine invitée & VM Linux WSL 2 & Machine virtuelle légère (Hyper-V) qui héberge le moteur Docker et les conteneurs \\
 Virtualisation & Docker Desktop & Conteneurisation, orchestration via \texttt{docker-compose.yml} \\
 Base vectorielle & conteneur \texttt{rag-db} & image \texttt{pgvector/pgvector:pg16} --- PostgreSQL 16 + extension \texttt{vector}, port \texttt{localhost:5433} \\
-Moteur LLM & conteneur \texttt{rag-ollama} & image \texttt{ollama/ollama} --- embedding + generation, port \texttt{localhost:11434} \\
-Modele d'embedding & \texttt{nomic-embed-text} & Texte vers vecteur de \textbf{768} dimensions \\
-Modele de generation & \texttt{gemma2:2b} (Google) & LLM leger (environ 1,6 Go) adapte a une execution locale (GPU/CPU) \\
+Moteur LLM & conteneur \texttt{rag-ollama} & image \texttt{ollama/ollama} --- embedding + génération, port \texttt{localhost:11434} \\
+Modèle d'embedding & \texttt{nomic-embed-text} & Texte vers vecteur de \textbf{768} dimensions \\
+Modèle de génération & \texttt{gemma2:2b} (Google) & LLM léger (environ 1,6 Go) adapté à une exécution locale (GPU/CPU) \\
 Scripts & Python 3.14 (venv) & \texttt{psycopg2-binary} (PostgreSQL) + \texttt{requests} (API Ollama) \\
 \bottomrule
 \end{tabular}
 \end{center}
 
-\subsection{Schema d'architecture}
+\subsection{Schéma d'architecture}
 
 \begin{center}
 \resizebox{0.98\textwidth}{!}{%
@@ -166,7 +167,7 @@ Scripts & Python 3.14 (venv) & \texttt{psycopg2-binary} (PostgreSQL) + \texttt{r
         \footnotesize venv 3.14\\ \footnotesize ingest.py \textperiodcentered{} query.py};
   \begin{scope}[on background layer]
     \node[draw=black!55, rounded corners, fit=(py)(docker), inner sep=8mm,
-          label={above:\textbf{Machine hote --- Windows 11}}] (host) {};
+          label={above:\textbf{Machine hôte --- Windows 11}}] (host) {};
   \end{scope}
   \draw[ar] (py.east|-ollama.west) -- node[above,font=\scriptsize]{REST :11434} (ollama.west);
   \draw[ar] (py.east|-db.west) -- node[above,font=\scriptsize]{SQL :5433} (db.west);
@@ -174,13 +175,13 @@ Scripts & Python 3.14 (venv) & \texttt{psycopg2-binary} (PostgreSQL) + \texttt{r
 }
 \end{center}
 
-\begin{center}\footnotesize\itshape Figure 1 --- Architecture : scripts Python sur l'hote,
-conteneurs Ollama et PostgreSQL/pgvector orchestres par Docker. Les scripts dialoguent
+\begin{center}\footnotesize\itshape Figure 1 --- Architecture : scripts Python sur l'hôte,
+conteneurs Ollama et PostgreSQL/pgvector orchestrés par Docker. Les scripts dialoguent
 avec Ollama en REST (port 11434) et avec PostgreSQL en SQL (port 5433).\end{center}
 
 \section{Workflow des traitements}
-Le pipeline se decompose en deux phases : une phase d'\textbf{ingestion} (hors ligne,
-executee une fois pour peupler la base) et une phase d'\textbf{interrogation} (rejouee a
+Le pipeline se décompose en deux phases : une phase d'\textbf{ingestion} (hors ligne,
+exécutée une fois pour peupler la base) et une phase d'\textbf{interrogation} (rejouée à
 chaque question de l'utilisateur).
 
 \begin{center}
@@ -195,7 +196,7 @@ chaque question de l'utilisateur).
 ]
   % Lane A : ingestion
   \node[n] (d)  {Documents\\ \texttt{data/*.md}};
-  \node[n, right=of d]  (ch) {Decoupage\\ chunks 600/100};
+  \node[n, right=of d]  (ch) {Découpage\\ chunks 600/100};
   \node[g, right=of ch] (em) {Embedding\\ nomic-embed-text};
   \node[n, right=of em] (ins){INSERT\\ pgvector};
   \draw[ar] (d)--(ch); \draw[ar] (ch)--(em); \draw[ar] (em)--(ins);
@@ -206,33 +207,33 @@ chaque question de l'utilisateur).
   \node[n, right=of qe] (kn) {Recherche KNN\\ pgvector TOP\_K=4};
   \node[n, right=of kn] (pr) {Prompt enrichi\\ contexte + question};
   \draw[ar] (q)--(qe); \draw[ar] (qe)--(kn); \draw[ar] (kn)--(pr);
-  \node[g, below=11mm of kn] (gen) {Generation LLM\\ gemma2:2b};
-  \node[n, right=of gen] (rep) {Reponse\\ contextualisee};
+  \node[g, below=11mm of kn] (gen) {Génération LLM\\ gemma2:2b};
+  \node[n, right=of gen] (rep) {Réponse\\ contextualisée};
   \draw[ar] (pr.south) |- (gen.east);
   \draw[ar] (gen)--(rep);
-  \node[lane] at ([yshift=8mm]q.north west) {B. Interrogation (query.py) --- a chaque question};
+  \node[lane] at ([yshift=8mm]q.north west) {B. Interrogation (query.py) --- à chaque question};
 \end{tikzpicture}%
 }
 \end{center}
 
 \begin{center}\footnotesize\itshape Figure 2 --- Workflow : (A) ingestion des documents,
-(B) interrogation contextualisee du LLM par recherche de similarite vectorielle.\end{center}
+(B) interrogation contextualisée du LLM par recherche de similarité vectorielle.\end{center}
 
 \newpage
-\section{Procedure d'installation}
-L'ensemble de l'environnement se deploie depuis le dossier du projet.
+\section{Procédure d'installation}
+L'ensemble de l'environnement se déploie depuis le dossier du projet.
 \begin{lstlisting}[language=bash]
-# 0) Recuperer le projet
+# 0) Récupérer le projet
 git clone https://github.com/Cyprientsp/projet_cyber_rag.git
 cd projet_cyber_rag
 
-# 1) Demarrer la base vectorielle et le moteur LLM
+# 1) Démarrer la base vectorielle et le moteur LLM
 docker compose up -d
 docker compose ps                      # rag-db "healthy", rag-ollama "up"
 
-# 2) Telecharger les modeles dans Ollama
+# 2) Télécharger les modèles dans Ollama
 docker exec rag-ollama ollama pull nomic-embed-text    # embeddings (768 dim.)
-docker exec rag-ollama ollama pull gemma2:2b           # generation
+docker exec rag-ollama ollama pull gemma2:2b           # génération
 
 # 3) Environnement Python
 python -m venv .venv
@@ -243,15 +244,15 @@ pip install -r requirements.txt
 python scripts/ingest.py --reset
 python scripts/query.py "Quelle est la garantie de l'onduleur HX-Solar 5000 ?"
 python scripts/query.py --no-rag "..." # comparaison : LLM seul, sans la base
-python scripts/demo.py                 # batterie de demonstration complete
+python scripts/demo.py                 # batterie de démonstration complète
 \end{lstlisting}
-Au premier demarrage, le script \texttt{db/init.sql} est joue automatiquement : il active
-l'extension \texttt{vector}, cree la table \texttt{documents} et son index HNSW.
+Au premier démarrage, le script \texttt{db/init.sql} est joué automatiquement : il active
+l'extension \texttt{vector}, crée la table \texttt{documents} et son index HNSW.
 
 \section{Scripts}
 \subsection{Ingestion : \texttt{ingest.py}}
-Lit les documents, les decoupe en fragments (\textit{chunks}) d'environ 600 caracteres avec
-100 de recouvrement, calcule l'embedding de chaque fragment via Ollama et l'insere dans
+Lit les documents, les découpe en fragments (\textit{chunks}) d'environ 600 caractères avec
+100 de recouvrement, calcule l'embedding de chaque fragment via Ollama et l'insère dans
 pgvector.
 \begin{lstlisting}[language=Python]
 def chunk_text(text, size, overlap):
@@ -261,14 +262,14 @@ def chunk_text(text, size, overlap):
     chunks, start, n = [], 0, len(text)
     while start < n:
         end = min(start + size, n)
-        if end < n:                       # coupe de preference sur un saut de ligne
+        if end < n:                       # coupe de préférence sur un saut de ligne
             window = text.rfind("\n", start + size // 2, end)
             if window > start:
                 end = window
         chunk = text[start:end].strip()
         if chunk:
             chunks.append(chunk)
-        if end >= n:                      # tout le texte consomme -> fin
+        if end >= n:                      # tout le texte consommé -> fin
             break
         start = max(end - overlap, start + 1)   # progression stricte
 
@@ -279,9 +280,9 @@ def embed(text):                          # embedding via Ollama (nomic-embed-te
 \end{lstlisting}
 
 \subsection{Interrogation : \texttt{query.py}}
-Vectorise la question, recupere les \texttt{TOP\_K=4} fragments les plus proches (distance
-cosine via l'operateur \texttt{<=>} de pgvector), construit un prompt contraint au
-contexte puis genere la reponse avec \texttt{gemma2:2b}.
+Vectorise la question, récupère les \texttt{TOP\_K=4} fragments les plus proches (distance
+cosine via l'opérateur \texttt{<=>} de pgvector), construit un prompt contraint au
+contexte puis génère la réponse avec \texttt{gemma2:2b}.
 \begin{lstlisting}[language=Python]
 def retrieve(question, k=TOP_K):
     qvec = embed(question)                        # 1) vectorise la question
@@ -296,21 +297,21 @@ def answer(question):
     hits = retrieve(question)
     context = "\n\n".join(f"[Source: {s}]\n{c}" for s, c, _ in hits)
     prompt = f"{SYSTEM_PROMPT}\n\n### CONTEXTE\n{context}\n\n### QUESTION\n{question}"
-    return generate(prompt)                        # 3) generation gemma2:2b (Ollama)
+    return generate(prompt)                        # 3) génération gemma2:2b (Ollama)
 \end{lstlisting}
 
 
-\section{Demonstration : couples prompt / reponse}
-Le tableau ci-dessous met en evidence la \textbf{bonne prise en compte de la base de
-connaissance} : les reponses \guillemotleft{} Avec RAG \guillemotright{} citent des faits
-precis issus des documents HelioniX. Pour chaque question, la reponse
-\guillemotleft{} Sans RAG \guillemotright{} (LLM seul) est fournie en regard : le modele
-adopte alors l'un des deux comportements de defaut --- soit il \textbf{invente} une reponse
-plausible mais fausse (lignes 1 a 4), soit il \textbf{refuse} faute d'acces aux donnees
-(lignes 5 et 6) --- ce qui demontre l'apport du RAG. La derniere question porte
-volontairement sur un sujet \textbf{hors base} : le systeme repond qu'il ne dispose pas de
-l'information, prouvant qu'il ne brode pas. La colonne \textbf{Temps} donne la duree de
-generation cote serveur (secondes).
+\section{Démonstration : couples prompt / réponse}
+Le tableau ci-dessous met en évidence la \textbf{bonne prise en compte de la base de
+connaissance} : les réponses \guillemotleft{} Avec RAG \guillemotright{} citent des faits
+précis issus des documents HelioniX. Pour chaque question, la réponse
+\guillemotleft{} Sans RAG \guillemotright{} (LLM seul) est fournie en regard : le modèle
+adopte alors l'un des deux comportements de défaut --- soit il \textbf{invente} une réponse
+plausible mais fausse (lignes 1 à 4), soit il \textbf{refuse} faute d'accès aux données
+(lignes 5 et 6) --- ce qui démontre l'apport du RAG. La dernière question porte
+volontairement sur un sujet \textbf{hors base} : le système répond qu'il ne dispose pas de
+l'information, prouvant qu'il ne brode pas. La colonne \textbf{Temps} donne la durée de
+génération côté serveur (secondes).
 
 \renewcommand{\arraystretch}{1.25}
 \begin{longtable}{|>{\raggedright\arraybackslash}p{0.35cm}
@@ -320,11 +321,11 @@ generation cote serveur (secondes).
                   |>{\raggedright\arraybackslash}p{6.5cm}|}
 \hline
 \rowcolor{titleblue!12}
-\textbf{\#} & \textbf{Prompt} & \textbf{Chunks} & \textbf{Temps (s)} & \textbf{Reponse} \\ \hline
+\textbf{\#} & \textbf{Prompt} & \textbf{Chunks} & \textbf{Temps (s)} & \textbf{Réponse} \\ \hline
 \endfirsthead
 \hline
 \rowcolor{titleblue!12}
-\textbf{\#} & \textbf{Prompt} & \textbf{Chunks} & \textbf{Temps (s)} & \textbf{Reponse} \\ \hline
+\textbf{\#} & \textbf{Prompt} & \textbf{Chunks} & \textbf{Temps (s)} & \textbf{Réponse} \\ \hline
 \endhead
 1 & Quelle est la garantie constructeur de l'onduleur HX-Solar 5000 ? & 3 src\newline score 0,812 & RAG 61,8\textsuperscript{*}\newline seul 0,7 & \textbf{Avec RAG :} 12 ans\newline\newline \textbf{Sans RAG (invente) :} La garantie est de \textbf{10 ans} sur le matériel et \textbf{5 ans} sur les composants électroniques. \\ \hline
 2 & Que signifie le code d'erreur E-204 sur le HX-Solar 5000 ? & 3 src\newline score 0,787 & RAG 0,6\newline seul 0,7 & \textbf{Avec RAG :} Le code E-204 signale une \textbf{surchauffe du transformateur}.\newline\newline \textbf{Sans RAG (invente) :} Le code E-204 indique un \textbf{défaut de communication avec la batterie}. \\ \hline
@@ -339,16 +340,17 @@ chargement initial du modèle \texttt{gemma2:2b} en mémoire GPU (VRAM).
 \normalsize
 \newpage
 \section{Conclusion}
-L'environnement repond aux trois objectifs du projet : \textbf{(1)} construction d'une
-plateforme IA locale conteneurisee (Ollama + PostgreSQL/pgvector), \textbf{(2)} ingestion
+L'environnement répond aux trois objectifs du projet : \textbf{(1)} construction d'une
+plateforme IA locale conteneurisée (Ollama + PostgreSQL/pgvector), \textbf{(2)} ingestion
 d'un jeu de documents dans une base de connaissance vectorielle, et \textbf{(3)}
 interrogation d'un LLM enrichi par cette base. La comparaison \guillemotleft{} avec / sans RAG \guillemotright{}
-confirme que la base de connaissance est effectivement mobilisee et qu'elle ameliore
-nettement la pertinence des reponses sur des donnees metier privees.
+confirme que la base de connaissance est effectivement mobilisée et qu'elle améliore
+nettement la pertinence des réponses sur des données métier privées.
 
 \medskip
-\noindent\small Depot du projet :
+\noindent\small Dépôt du projet :
 \href{\projeturl}{\texttt{\color{accent}github.com/Cyprientsp/projet\_cyber\_rag}}
+\normalsize
 \newpage
 \section{Annexes}
 
