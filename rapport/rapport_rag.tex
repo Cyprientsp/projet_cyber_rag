@@ -92,7 +92,7 @@
   }\\[1.5cm]
 
   % --- Auteur / date ---
-  {\large\bfseries\color{titleblue}Cyprien TCharlaté.\par}% <-- a personnaliser
+  {\large\bfseries\color{titleblue}Cyprien Charlaté.\par}% <-- a personnaliser
   \vspace{4pt}
   {\color{codecmt}\today}
 
@@ -104,7 +104,7 @@ artificielle exploitant le principe du \textbf{RAG (Retrieval-Augmented Generati
 enrichir les reponses d'un grand modele de langage (LLM) avec une base de connaissance
 personnalisee, afin qu'il reponde sur des donnees qu'il n'a jamais vues lors de son
 entrainement. La demonstration s'appuie sur une entreprise \textbf{fictive}, HelioniX
-SAS (onduleurs photovoltaiques), dont les documents internes sous forment de markdown servent de base de connaissance.
+SAS (onduleurs photovoltaiques), dont les documents internes sous forme de markdown servent de base de connaissance. Ils ont été générés à partir de Claude Code.
 
 \medskip
 \noindent\textbf{Code source} --- L'ensemble des scripts, des documents de demonstration
@@ -117,6 +117,15 @@ plutot que sur une machine virtuelle complete : chaque outil tourne dans un cont
 isole, orchestre par \texttt{docker compose}. Ce choix reduit l'empreinte et rend
 l'environnement reproductible en une commande.
 
+\medskip
+\noindent\textbf{Machine hote et machine invitee.} La \textbf{machine hote} est le poste
+physique sous Windows 11 Pro. Docker Desktop s'appuie sur \textbf{WSL 2}
+(\textit{Windows Subsystem for Linux}), qui est une \textbf{machine virtuelle Linux
+legere} executee par l'hyperviseur Hyper-V : c'est cette VM qui joue le role de
+\textbf{machine invitee} et heberge le moteur Docker ainsi que les conteneurs
+\texttt{rag-db} et \texttt{rag-ollama}. On combine donc virtualisation systeme (l'invite
+Linux de WSL 2) et virtualisation applicative (les conteneurs) au sein d'une meme pile.
+
 \begin{center}
 \renewcommand{\arraystretch}{1.3}
 \begin{tabular}{>{\raggedright\arraybackslash}p{2.6cm} >{\raggedright\arraybackslash}p{3.6cm} >{\raggedright\arraybackslash}p{8.4cm}}
@@ -124,6 +133,7 @@ l'environnement reproductible en une commande.
 \textbf{Couche} & \textbf{Element} & \textbf{Detail} \\
 \midrule
 Machine hote & Windows 11 Pro (x86-64) & Execute Docker Desktop (backend WSL 2) et l'interpreteur Python \\
+Machine invitee & VM Linux WSL 2 & Machine virtuelle legere (Hyper-V) qui heberge le moteur Docker et les conteneurs \\
 Virtualisation & Docker Desktop & Conteneurisation, orchestration via \texttt{docker-compose.yml} \\
 Base vectorielle & conteneur \texttt{rag-db} & image \texttt{pgvector/pgvector:pg16} --- PostgreSQL 16 + extension \texttt{vector}, port \texttt{localhost:5433} \\
 Moteur LLM & conteneur \texttt{rag-ollama} & image \texttt{ollama/ollama} --- embedding + generation, port \texttt{localhost:11434} \\
@@ -208,7 +218,7 @@ chaque question de l'utilisateur).
 \begin{center}\footnotesize\itshape Figure 2 --- Workflow : (A) ingestion des documents,
 (B) interrogation contextualisee du LLM par recherche de similarite vectorielle.\end{center}
 
-
+\newpage
 \section{Procedure d'installation}
 L'ensemble de l'environnement se deploie depuis le dossier du projet.
 \begin{lstlisting}[language=bash]
@@ -227,7 +237,7 @@ docker exec rag-ollama ollama pull gemma2:2b           # generation
 # 3) Environnement Python
 python -m venv .venv
 .venv\Scripts\activate                 # Windows
-pip install -r projet_cyber_rag/requirements.txt
+pip install -r requirements.txt
 
 # 4) Ingestion puis interrogation
 python scripts/ingest.py --reset
@@ -325,8 +335,7 @@ generation cote serveur (secondes).
 7 & Quelle est la capitale de l'Australie ? \textit{(hors base)} & 3 src\newline score 0,597 & RAG 7,1\newline seul 0,5 & \textbf{Avec RAG :} \guillemotleft{} Je ne dispose pas de cette information dans ma base de connaissance \guillemotright{}.\newline\newline \textbf{Sans RAG :} Canberra. \\ \hline
 \end{longtable}
 \noindent\footnotesize\textsuperscript{*} Première requête : la durée inclut le
-chargement initial du modèle \texttt{gemma2:2b} en mémoire GPU (VRAM). Une fois le modèle
-résident, les requêtes suivantes s'exécutent en \texttt{$\sim$0,6 s} (voir lignes 2 et 4).
+chargement initial du modèle \texttt{gemma2:2b} en mémoire GPU (VRAM).
 \normalsize
 \newpage
 \section{Conclusion}
@@ -341,7 +350,7 @@ nettement la pertinence des reponses sur des donnees metier privees.
 \noindent\small Depot du projet :
 \href{\projeturl}{\texttt{\color{accent}github.com/Cyprientsp/projet\_cyber\_rag}}
 \newpage
-\section{Annexe}
+\section{Annexes}
 
 Voici les documents fictifs utilisés dans le RAG :
 
